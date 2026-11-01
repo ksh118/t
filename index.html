@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>음악 감상 수행평가 퀴즈</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mu:#6b6b66;--ac:#3b5bdb;--ok:#2b8a3e;--no:#c92a2a;--bd:#ddd9d0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181b;--card:#222428;--tx:#ececea;--mu:#9a9a94;--ac:#7c93ff;--ok:#69db7c;--no:#ff8787;--bd:#383a40;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17181b;--card:#222428;--tx:#ececea;--mu:#9a9a94;--ac:#7c93ff;--ok:#69db7c;--no:#ff8787;--bd:#383a40;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.6}
+main{max-width:620px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:8px 0 4px}
+.sub{color:var(--mu);font-size:14px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:9px 14px;cursor:pointer}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+button.on{border-color:var(--ac);color:var(--ac);font-weight:700}
+input,textarea{font:inherit;width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 3px}
+.q{font-size:17px;font-weight:600;margin:0 0 6px}
+.tag{font-size:12px;color:var(--ac);font-weight:700}
+.ok{color:var(--ok)}.no{color:var(--no)}
+.res{margin-top:12px;font-size:15px}
+.stat{display:flex;gap:16px;font-size:14px;color:var(--mu)}
+iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000}
+a{color:var(--ac)}
+details summary{cursor:pointer;color:var(--mu);font-size:14px}
+small{color:var(--mu)}
+</style>
+</head>
+<body>
+<main>
+<h1>🎵 음악 감상 수행평가 퀴즈</h1>
+<div class="sub">서양음악의 연주형태 · 계속 랜덤 출제</div>
+
+<div class="card">
+  <div class="row" id="modes"></div>
+  <div class="stat" style="margin-top:10px"><span>맞은 문제 <b id="sc">0</b> / <b id="tot">0</b></span><button onclick="resetS()" style="padding:2px 10px;font-size:13px">점수 초기화</button></div>
+</div>
+
+<div class="card" id="qa"></div>
+
+<details class="card">
+  <summary>🎬 듣기 문제용 유튜브 링크 등록 (한 번만)</summary>
+  <p style="font-size:14px;color:var(--mu)">곡마다 유튜브 링크를 붙여넣으면 0~3분 사이 랜덤 지점부터 재생돼요. 비워두면 유튜브 검색 버튼이 나와요.</p>
+  <div id="links"></div>
+</details>
+<small>※ 영상 화면에 제목이 보일 수 있으니 듣기 문제는 화면을 가리고 소리로만 풀어보세요.</small>
+</main>
+
+<script>
+const P=[
+{c:'쇼팽',n:'폴란드',t:'녹턴 2번',tA:['녹턴2번','녹턴2'],f:'독주',fA:['독주','솔로','solo'],s:'쇼팽 녹턴 2번'},
+{c:'피아졸라',n:'아르헨티나',t:'탱고의 역사',tA:['탱고의역사'],f:'이중주',fA:['이중주','듀오','duo','duetto'],s:'피아졸라 탱고의 역사'},
+{c:'생상스',n:'프랑스',t:'죽음의 무도',tA:['죽음의무도'],f:'삼중주',fA:['삼중주','3중주','트리오','trio'],s:'생상스 죽음의 무도 피아노 트리오'},
+{c:'하이든',n:'오스트리아',t:'종달새',tA:['종달새'],f:'사중주',fA:['사중주','4중주','콰르텟','쿼텟','quartet','quartetto'],s:'하이든 종달새 현악 4중주'},
+{c:'모차르트',n:'오스트리아',t:'작은 밤의 음악',tA:['작은밤의음악'],f:'현악합주',fA:['현악합주','현악앙상블'],s:'모차르트 아이네 클라이네 나흐트무지크'},
+{c:'수자',n:'미국',t:'워싱턴 포스트 행진곡',tA:['워싱턴포스트행진곡','워싱턴포스트'],f:'관악합주',fA:['관악합주','윈드앙상블'],s:'수자 워싱턴 포스트 행진곡'},
+{c:'드보르작',n:'체코',t:'신세계로부터',tA:['신세계로부터','신세계','신세계교향곡'],f:'관현악 합주',fA:['관현악합주','관현악','오케스트라','orchestra'],s:'드보르작 신세계로부터 교향곡 9번'},
+{c:'라흐마니노프',n:'러시아',t:'피아노 협주곡 2번',tA:['피아노협주곡2번','피아노협주곡제2번'],f:'협연',fA:['협연','soloistwithorchestra'],s:'라흐마니노프 피아노 협주곡 2번'}
+];
+const NICK=[['쇼팽','피아노의 시인',['피아노의시인']],['하이든','현악 4중주의 아버지',['현악4중주의아버지','현악사중주의아버지']],['모차르트','음악의 신동',['음악의신동']],['수자','행진곡의 왕',['행진곡의왕']],['드보르작','기차 매니아',['기차매니아']]];
+const DEFS=[
+['현악합주의 정의 (어떤 악기로 연주?)','바이올린, 비올라, 첼로, 더블베이스 등 현악기만으로 연주하는 것',[['현악기']]],
+['관악합주의 정의 (어떤 악기들이 함께?)','금관악기, 목관악기, 타악기가 함께 연주하는 것',[['금관'],['목관'],['타악']]],
+['관현악 합주(Orchestra)의 정의','관악기, 현악기, 타악기가 함께 연주하는 것',[['관악'],['현악'],['타악']]],
+['협연(Soloist with Orchestra)의 정의','독주자와 오케스트라가 함께 연주하는 것 (빠름-느림-빠름 3악장 협주곡)',[['독주'],['오케스트라','관현악']]],
+['현악 4중주의 악기편성 (4개 모두)','바이올린1, 바이올린2, 비올라, 첼로',[['바이올린'],['비올라'],['첼로']]]
+];
+const NAMES=['듣고 맞히기','연주형태 이름','작곡가 별명','정의·편성','전체 랜덤'];
+let mode=4,Q=null,done=false,S={ok:0,tot:0},L={};
+try{L=JSON.parse(localStorage.getItem('mq_links')||'{}')}catch(e){}
+const D=['https://www.youtube.com/watch?v=HEl5efzPOx4','https://www.youtube.com/watch?v=WLgYIbDY9ds','https://www.youtube.com/watch?v=InsnZuS9TBI','https://www.youtube.com/watch?v=kqnjVNKhWnc','https://www.youtube.com/watch?v=5Qyr4EfB-xA','https://www.youtube.com/watch?v=d55rZM1yJlo','https://www.youtube.com/watch?v=t3CkozkutRg','https://www.youtube.com/watch?v=YviN1tuXbzc&t=593s'];
+P.forEach((p,i)=>{L[p.s]=D[i]});
+function ytT(u){const m=(u||'').match(/[?&]t=(\d+)/);return m?+m[1]:0}
+const $=id=>document.getElementById(id);
+const R=a=>a[Math.floor(Math.random()*a.length)];
+const nz=s=>(s||'').toLowerCase().replace(/[\s.,·\-]/g,'');
+const has=(v,alts)=>{v=nz(v);return v&&alts.some(a=>v===nz(a))};
+
+function modes(){$('modes').innerHTML=NAMES.map((n,i)=>`<button class="${i==mode?'on':''}" onclick="setMode(${i})">${n}</button>`).join('')}
+function setMode(i){mode=i;modes();next()}
+function resetS(){S={ok:0,tot:0};sc()}
+function sc(){$('sc').textContent=S.ok;$('tot').textContent=S.tot}
+
+function mk(){
+  let m=mode==4?R([0,0,1,2,3]):mode;
+  if(m==0){const p=R(P);return{type:'listen',p,start:Math.floor(Math.random()*181),title:'🎧 음악을 듣고 작곡가·국적·작품명·연주형태를 쓰세요',fields:[['작곡가',[p.c]],['국적',[p.n]],['작품명',p.tA],['연주형태',p.fA]]}}
+  if(m==1){
+    if(Math.random()<.5){const k=R([[1,0],[2,1],[3,2],[4,3]]);const p=P[k[1]*1===k[1]?k[1]:0];
+      const idx={1:0,2:1,3:2,4:3}[k[0]];const pp=P[idx];
+      return{type:'form',title:`${k[0]}명이 악기를 연주하는 형태의 이름은? (한글 또는 이태리어)`,fields:[['연주형태',pp.fA]],show:pp.f+' (Solo / Duo / Trio / Quartet)'}}
+    const p=R(P);return{type:'form',title:`「${p.c} – ${p.t}」의 연주형태는?`,fields:[['연주형태',p.fA]],show:p.f}}
+  if(m==2){const k=R(NICK);
+    if(Math.random()<.5)return{type:'nick',title:`「${k[1]}」라는 별명을 가진 작곡가는?`,fields:[['작곡가',[k[0]]]],show:k[0]};
+    return{type:'nick',title:`${k[0]}의 별명은?`,fields:[['별명',k[2]]],show:k[1]}}
+  const d=R(DEFS);return{type:'def',title:d[0],def:d,fields:[['내 답']]}
+}
+
+function next(){
+  Q=keep||mk();keep=null;done=false;let h=`<div class="tag">${Q.type=='listen'?'듣기':Q.type=='def'?'정의·편성':'단답'}</div><p class="q">${Q.title}</p>`;
+  if(Q.type=='listen'){
+    const id=ytId(L[Q.p.s]);
+    if(id)h+=`<div id="pl" style="position:relative;height:84px;overflow:hidden;border-radius:10px;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:var(--mu)">🎧 재생 버튼을 누르세요</div><div class="row" style="margin-top:8px"><button class="p" onclick="playClip()">▶ 재생 (10~15초)</button><button onclick="playClip(1)">🔀 다른 구간</button></div>`;
+    else h+=`<div class="row"><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(Q.p.s)}" target="_blank" rel="noopener"><button type="button">🔎 유튜브에서 이 곡 찾기</button></a></div><label>마음에 드는 영상 링크 붙여넣기 (곡당 한 번만, 저장돼요)</label><input placeholder="https://youtu.be/..." onchange="setLink(this.value)">`;
+  }
+  h+=Q.fields.map((f,i)=>`<label>${f[0]}</label>${Q.type=='def'?`<textarea rows="2" id="f${i}"></textarea>`:`<input id="f${i}" autocomplete="off">`}`).join('');
+  h+=`<div class="row" style="margin-top:14px"><button class="p" id="go" onclick="check()">정답 확인</button>${Q.type=='listen'?'<button onclick="next()">다른 곡</button>':''}</div><div class="res" id="res"></div>`;
+  $('qa').innerHTML=h;const f=$('f0');if(f&&Q.type!='listen')f.focus();
+}
+let keep=null;
+function setLink(v){if(!ytId(v))return;L[Q.p.s]=v.trim();try{localStorage.setItem('mq_links',JSON.stringify(L))}catch(e){}keep=Q;next()}
+function playClip(nw){const id=ytId(L[Q.p.s]);if(!id)return;if(nw)Q.start=Math.floor(Math.random()*181);const len=10+Math.floor(Math.random()*6),s=Q.start+ytT(L[Q.p.s]);
+  $('pl').innerHTML=`<span>🎧 듣는 중… (${len}초 후 자동 정지)</span><iframe allow="autoplay; encrypted-media" style="position:absolute;left:0;top:0;width:320px;height:180px;opacity:0;pointer-events:none" src="https://www.youtube.com/embed/${id}?start=${s}&end=${s+len}&autoplay=1&controls=0"></iframe>`;
+  setTimeout(()=>{const e=$('pl');if(e)e.firstChild.textContent='⏹ 끝! 다시 들으려면 ▶ 재생'},(len+2)*1000)}
+function ytId(u){if(!u)return null;const m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);return m?m[1]:null}
+
+function check(){
+  if(done){next();return}
+  let res=[],all=true;
+  if(Q.type=='def'){
+    const v=nz($('f0').value);const okk=Q.def[2].every(g=>g.some(k=>v.includes(nz(k))));
+    all=okk;res.push(`<div class="${okk?'ok':'no'}">${okk?'⭕ 정답!':'❌ 핵심 단어가 빠졌어요'}</div><div>모범답: ${Q.def[1]}</div>`);
+  }else{
+    Q.fields.forEach((f,i)=>{const okk=has($('f'+i).value,f[1]);if(!okk)all=false;
+      res.push(`<div class="${okk?'ok':'no'}">${okk?'⭕':'❌'} ${f[0]}: ${okk?$('f'+i).value:'정답 → '+(f[0]=='작품명'?Q.p.t:f[0]=='연주형태'&&Q.p?Q.p.f:f[0]=='작곡가'&&Q.p?Q.p.c:f[0]=='국적'?Q.p.n:Q.show||f[1][0])}</div>`)});
+  }
+  S.tot++;if(all)S.ok++;sc();done=true;
+  $('res').innerHTML=res.join('')+(all?'':'<button style="margin-top:8px" onclick="S.ok++;sc();this.remove()">내 답도 맞아요 (+1)</button>');
+  $('go').textContent='다음 문제 →';
+}
+document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.tagName!='TEXTAREA'&&$('go'))check()});
+
+$('links').innerHTML=P.map((p,i)=>`<label>${p.c} – ${p.t}</label><input id="l${i}" placeholder="https://www.youtube.com/watch?v=..." value="${L[p.s]||''}" onchange="saveL()">`).join('');
+function saveL(){P.forEach((p,i)=>{L[p.s]=$('l'+i).value.trim()});try{localStorage.setItem('mq_links',JSON.stringify(L))}catch(e){}}
+modes();sc();next();
+</script>
+</body>
+</html>
