@@ -104,18 +104,18 @@ function next(){
   Q=keep||mk();keep=null;done=false;let h=`<div class="tag">${Q.type=='listen'?'듣기':Q.type=='def'?'정의·편성':'단답'}</div><p class="q">${Q.title}</p>`;
   if(Q.type=='listen'){
     const id=ytId(L[Q.p.s]);
-    if(id)h+=`<div id="pl" style="position:relative;height:84px;overflow:hidden;border-radius:10px;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:var(--mu)">🎧 재생 버튼을 누르세요</div><div class="row" style="margin-top:8px"><button class="p" onclick="playClip()">▶ 재생 (10~15초)</button><button onclick="playClip(1)">🔀 다른 구간</button></div>`;
+    if(id)h+=`<div id="pl" style="position:relative;height:84px;overflow:hidden;border-radius:10px;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:var(--mu)">🎧 재생 버튼을 누르세요</div><div class="row" style="margin-top:8px"><button class="p" onclick="playClip()">▶ 재생 (10~15초)</button><button onclick="playClip(1)">🔀 다른 구간</button><button onclick="vis=!vis;this.textContent=vis?'🙈 영상 숨기기':'👁 영상 보이기 (광고 건너뛰기용)'">👁 영상 보이기 (광고 건너뛰기용)</button></div>`;
     else h+=`<div class="row"><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(Q.p.s)}" target="_blank" rel="noopener"><button type="button">🔎 유튜브에서 이 곡 찾기</button></a></div><label>마음에 드는 영상 링크 붙여넣기 (곡당 한 번만, 저장돼요)</label><input placeholder="https://youtu.be/..." onchange="setLink(this.value)">`;
   }
   h+=Q.fields.map((f,i)=>`<label>${f[0]}</label>${Q.type=='def'?`<textarea rows="2" id="f${i}"></textarea>`:`<input id="f${i}" autocomplete="off">`}`).join('');
   h+=`<div class="row" style="margin-top:14px"><button class="p" id="go" onclick="check()">정답 확인</button>${Q.type=='listen'?'<button onclick="next()">다른 곡</button>':''}</div><div class="res" id="res"></div>`;
   $('qa').innerHTML=h;const f=$('f0');if(f&&Q.type!='listen')f.focus();
 }
-let keep=null;
+let keep=null,vis=false;
 function setLink(v){if(!ytId(v))return;L[Q.p.s]=v.trim();try{localStorage.setItem('mq_links',JSON.stringify(L))}catch(e){}keep=Q;next()}
 function playClip(nw){const id=ytId(L[Q.p.s]);if(!id)return;if(nw)Q.start=Math.floor(Math.random()*181);const len=10+Math.floor(Math.random()*6),s=Q.start+ytT(L[Q.p.s]);
-  $('pl').innerHTML=`<span>🎧 듣는 중… (${len}초 후 자동 정지)</span><iframe allow="autoplay; encrypted-media" style="position:absolute;left:0;top:0;width:320px;height:180px;opacity:0;pointer-events:none" src="https://www.youtube.com/embed/${id}?start=${s}&end=${s+len}&autoplay=1&controls=0"></iframe>`;
-  setTimeout(()=>{const e=$('pl');if(e)e.firstChild.textContent='⏹ 끝! 다시 들으려면 ▶ 재생'},(len+2)*1000)}
+  $('pl').style.height=vis?'230px':'84px';$('pl').innerHTML=`<span>🎧 듣는 중… (광고가 나오면 끝날 때까지 기다려요, 곡은 ${len}초만 나와요)</span><iframe allow="autoplay; encrypted-media" style="position:absolute;left:0;top:0;width:${vis?'100%':'320px'};height:${vis?'100%':'180px'};opacity:${vis?1:0};pointer-events:${vis?'auto':'none'}" src="https://www.youtube.com/embed/${id}?start=${s}&end=${s+len}&autoplay=1&controls=0"></iframe>`;
+  setTimeout(()=>{const e=$('pl');if(e)e.firstChild.textContent='⏹ 끝! (광고가 있었다면 곡이 아직 나오는 중일 수 있어요) 다시 들으려면 ▶ 재생'},(len+2)*1000)}
 function ytId(u){if(!u)return null;const m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);return m?m[1]:null}
 
 function check(){
