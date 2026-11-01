@@ -101,8 +101,11 @@ function mk(){
   const d=R(DEFS);return{type:'def',title:d[0],def:d,fields:[['내 답']]}
 }
 
+function stopAu(){if(window._au)window._au.pause()}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAu()});
+window.addEventListener('pagehide',stopAu);
 function next(){
-  Q=keep||mk();keep=null;done=false;let h=`<div class="tag">${Q.type=='listen'?'듣기':Q.type=='def'?'정의·편성':'단답'}</div><p class="q">${Q.title}</p>`;
+  stopAu();Q=keep||mk();keep=null;done=false;let h=`<div class="tag">${Q.type=='listen'?'듣기':Q.type=='def'?'정의·편성':'단답'}</div><p class="q">${Q.title}</p>`;
   if(Q.type=='listen'){
     const id=1;
     if(id)h+=`<div id="pl" style="position:relative;height:84px;overflow:hidden;border-radius:10px;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:var(--mu)"> 재생 버튼을 누르세요</div><div class="row" style="margin-top:8px"><button class="p" onclick="playClip()">재생 (10~15초)</button><button onclick="playClip(1)"> 다른 구간</button></div>`;
